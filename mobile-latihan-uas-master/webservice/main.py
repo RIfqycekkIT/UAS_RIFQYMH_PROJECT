@@ -24,7 +24,7 @@ class Poli(BaseModel):
     jenis: str
 
 
-DB_NAME = "latihan_uas2.db"
+DB_NAME = "tugas_latihan_uas.db"
 
 @app.get('/init')
 def initial():
