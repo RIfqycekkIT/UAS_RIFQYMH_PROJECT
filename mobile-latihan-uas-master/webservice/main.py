@@ -1,73 +1,39 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
-from pydantic import BaseModel
-import sqlite3
 
 app = FastAPI()
 
+# Agar bisa diakses dari Flutter
 app.add_middleware(
     CORSMiddleware,
-    allow_headers=["*"],
+    allow_origins=["*"],  # Jika ingin lebih aman, isi dengan URL app Flutter-mu
+    allow_credentials=True,
     allow_methods=["*"],
-    allow_origins=["*"],    
-    allow_credentials=True,    
+    allow_headers=["*"],
 )
 
-class PoliRead(BaseModel):
-    id: Optional[int|None] = None
-    nama: str
-    jenis: str
+# Data contoh (bisa disambungkan ke database jika mau)
+covid_data = {
+    "global": {
+        "cases": 700000000,
+        "deaths": 6000000,
+        "recovered": 680000000
+    },
+    "indonesia": {
+        "cases": 7000000,
+        "deaths": 160000,
+        "recovered": 6800000
+    }
+}
 
-class Poli(BaseModel):
-    nama: str
-    jenis: str
+@app.get("/")
+def read_root():
+    return {"message": "API COVID-19 Lokal Berjalan"}
 
+@app.get("/covid/global")
+def get_global_data():
+    return covid_data["global"]
 
-DB_NAME = "tugas_latihan_uas.db"
-
-@app.get('/init')
-def initial():
-    conn = sqlite3.connect(DB_NAME)
-    cur = conn.cursor()
-
-    query = """
-    CREATE TABLE IF NOT EXISTS poli (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nama VARCHAR(200),
-        jenis VARCHAR(200)
-    )
-    """
-    cur.execute(query)
-    conn.commit()
-
-    return ({"status": "success","message":"berhasil"})
-
-
-@app.get("/poli")
-def get_poli():
-    conn = sqlite3.connect(DB_NAME)
-    cur = conn.cursor()
-    query = "SELECT * FROM poli"
-    result = []
-    cur.execute(query)
-
-    for row in cur.fetchall():
-        result.append(PoliRead(id=row[0], nama=row[1], jenis=row[2]))
-    
-    return ({"data": result})
-
-
-
-@app.post("/poli")
-def insert_poli(model:Poli):
-    conn = sqlite3.connect(DB_NAME)
-    cur = conn.cursor()
-    query = """
-    INSERT INTO poli (nama, jenis) VALUES ('{}', '{}');
-    """.format(model.nama, model.jenis)
-
-    cur.execute(query)
-    conn.commit()
-
-    return ({"status":"success", "message":"berhasil tambah data"})
+@app.get("/covid/indonesia")
+def get_indonesia_data():
+    return covid_data["indonesia"]
